@@ -22,6 +22,7 @@ import BackIcon from "../../../assets/images/icon/back.svg"; // Assume you have 
 import { DrawerActions, useNavigation } from "@react-navigation/native";
 import { FlashList } from "@shopify/flash-list";
 import { GroupedMediaList } from "../../../components/GroupedMediaList";
+import { MediaList } from "../../../components/Lists";
 
 const { width } = Dimensions.get("window");
 
@@ -61,6 +62,32 @@ function formatDate(timestamp, formatType) {
     }
   }
 }
+
+const groupMediaByDate = (Items, option) => {
+  const groupedData = Items.reduce((acc, item) => {
+    const formattedDate = formatDate(item.modificationTime, option);
+    if (!acc[formattedDate]) {
+      acc[formattedDate] = [];
+    }
+    acc[formattedDate].push(item);
+    return acc;
+  }, {});
+
+  // Convert the object to an array of [date, items] entries and sort by date
+  const sortedGroupedData = Object.entries(groupedData).sort((a, b) => {
+    // Sort based on the option selected
+    if (option === "Year") {
+      return parseInt(b[0]) - parseInt(a[0]); // Descending order for years
+    }
+    // For Month and Day, we need to parse dates for proper sorting
+    const dateA = new Date(a[0]);
+    const dateB = new Date(b[0]);
+    return dateB - dateA; // Descending order for months and days
+  });
+
+  return sortedGroupedData;
+};
+
 
 const GalleryApp = () => {
   const [albums, setAlbums] = useState([]);
@@ -180,73 +207,73 @@ const GalleryApp = () => {
     setIsModalVisible(true);
   };
 
-  const renderAlbumItem = ({ item }) => {
-    if (item.empty) {
-      return <View style={[styles.mediaItem, styles.invisible]} />; // Invisible placeholder
-    }
-    return (
-      <TouchableOpacity
-        onPress={() => loadMediaFromAlbum(item.id, item.title)}
-        style={styles.albumItem}
-      >
-        {item.firstMedia.mediaType === "photo" ? (
-          <FastImage
-            source={{
-              uri: item.firstMedia.uri,
-              priority: FastImage.priority.high,
-              cache: FastImage.cacheControl.immutable,
-            }}
-            style={styles.albumImage}
-            resizeMode={FastImage.resizeMode.cover}
-          />
-        ) : (
-          <Video
-            source={{ uri: item.firstMedia.uri }}
-            style={styles.albumImage}
-            resizeMode="cover"
-            isLooping
-            useNativeControls={false}
-          />
-        )}
-        <View style={styles.albumInfo}>
-          <Text style={styles.albumTitle} numberOfLines={2}>
-            {item.title}
-          </Text>
-          <Text style={styles.albumCount}>{item.totalCount}</Text>
-        </View>
-      </TouchableOpacity>
-    );
-  };
-  const renderMediaItem = ({ item, index }) => {
-    return (
-      <View style={styles.itemsContainer}>
-        <TouchableOpacity
-          onPress={() => openMedia(index)}
-          style={styles.mediaItem}
-        >
-          {item.mediaType === "photo" ? (
-            <FastImage
-              source={{
-                uri: item.uri,
-                priority: FastImage.priority.high,
-                cache: FastImage.cacheControl.immutable,
-              }}
-              style={styles.mediaImage}
-              resizeMode={FastImage.resizeMode.cover}
-            />
-          ) : (
-            <Video
-              source={{ uri: item.uri }}
-              style={styles.mediaImage}
-              useNativeControls
-              resizeMode="cover"
-              isLooping
-            />
-          )}
-        </TouchableOpacity>
-      </View>
-    );
-  };
+  // const renderAlbumItem = ({ item }) => {
+  //   if (item.empty) {
+  //     return <View style={[styles.mediaItem, styles.invisible]} />; // Invisible placeholder
+  //   }
+  //   return (
+  //     <TouchableOpacity
+  //       onPress={() => loadMediaFromAlbum(item.id, item.title)}
+  //       style={styles.albumItem}
+  //     >
+  //       {item.firstMedia.mediaType === "photo" ? (
+  //         <FastImage
+  //           source={{
+  //             uri: item.firstMedia.uri,
+  //             priority: FastImage.priority.high,
+  //             cache: FastImage.cacheControl.immutable,
+  //           }}
+  //           style={styles.albumImage}
+  //           resizeMode={FastImage.resizeMode.cover}
+  //         />
+  //       ) : (
+  //         <Video
+  //           source={{ uri: item.firstMedia.uri }}
+  //           style={styles.albumImage}
+  //           resizeMode="cover"
+  //           isLooping
+  //           useNativeControls={false}
+  //         />
+  //       )}
+  //       <View style={styles.albumInfo}>
+  //         <Text style={styles.albumTitle} numberOfLines={2}>
+  //           {item.title}
+  //         </Text>
+  //         <Text style={styles.albumCount}>{item.totalCount}</Text>
+  //       </View>
+  //     </TouchableOpacity>
+  //   );
+  // };
+  // const renderMediaItem = ({ item, index }) => {
+  //   return (
+  //     <View style={styles.itemsContainer}>
+  //       <TouchableOpacity
+  //         onPress={() => openMedia(index)}
+  //         style={styles.mediaItem}
+  //       >
+  //         {item.mediaType === "photo" ? (
+  //           <FastImage
+  //             source={{
+  //               uri: item.uri,
+  //               priority: FastImage.priority.high,
+  //               cache: FastImage.cacheControl.immutable,
+  //             }}
+  //             style={styles.mediaImage}
+  //             resizeMode={FastImage.resizeMode.cover}
+  //           />
+  //         ) : (
+  //           <Video
+  //             source={{ uri: item.uri }}
+  //             style={styles.mediaImage}
+  //             useNativeControls
+  //             resizeMode="cover"
+  //             isLooping
+  //           />
+  //         )}
+  //       </TouchableOpacity>
+  //     </View>
+  //   );
+  // };
 
   const backNavigation = () => {
     setSelectedAlbum(null);
@@ -278,30 +305,6 @@ const GalleryApp = () => {
   //   return Object.entries(groupedData);
   // };
 
-  const groupMediaByDate = (Items, option) => {
-    const groupedData = Items.reduce((acc, item) => {
-      const formattedDate = formatDate(item.modificationTime, option);
-      if (!acc[formattedDate]) {
-        acc[formattedDate] = [];
-      }
-      acc[formattedDate].push(item);
-      return acc;
-    }, {});
-
-    // Convert the object to an array of [date, items] entries and sort by date
-    const sortedGroupedData = Object.entries(groupedData).sort((a, b) => {
-      // Sort based on the option selected
-      if (option === "Year") {
-        return parseInt(b[0]) - parseInt(a[0]); // Descending order for years
-      }
-      // For Month and Day, we need to parse dates for proper sorting
-      const dateA = new Date(a[0]);
-      const dateB = new Date(b[0]);
-      return dateB - dateA; // Descending order for months and days
-    });
-
-    return sortedGroupedData;
-  };
 
   const handleOptionSelect = (option) => {
     if (selectedOption === option) {
@@ -407,21 +410,29 @@ const GalleryApp = () => {
           loadingMoreMedia={loadingMoreMedia}
         />
       ) : (
-        <FlashList
-          data={selectedAlbum ? mediaItems : adjustDataForColumns(albums, 3)}
-          keyExtractor={(item) => item.id}
-          key={"mediaItems"}
-          renderItem={selectedAlbum ? renderMediaItem : renderAlbumItem}
-          numColumns={3}
-          onScroll={selectedAlbum && handleScroll}
-          scrollEventThrottle={16} // Control how frequently the onScroll event fires
-          estimatedItemSize={110}
-          ListFooterComponent={
-            loadingMoreMedia ? (
-              <ActivityIndicator size="large" color="#00ff00" />
-            ) : null
-          }
+        <MediaList 
+        mediaAlbumItems={selectedAlbum ? mediaItems : adjustDataForColumns(albums, 3)}
+        onMediaPress={openMedia}
+        handleScroll={selectedAlbum && handleScroll}
+        selectedAlbum={selectedAlbum}
+        loadMediaFromAlbum={loadMediaFromAlbum}
+        loadingMoreMedia={loadingMoreMedia}
         />
+        // <FlashList
+        //   data={selectedAlbum ? mediaItems : adjustDataForColumns(albums, 3)}
+        //   keyExtractor={(item) => item.id}
+        //   key={"mediaItems"}
+        //   renderItem={selectedAlbum ? renderMediaItem : renderAlbumItem}
+        //   numColumns={3}
+        //   onScroll={selectedAlbum && handleScroll}
+        //   scrollEventThrottle={16} // Control how frequently the onScroll event fires
+        //   estimatedItemSize={110}
+        //   ListFooterComponent={
+        //     loadingMoreMedia ? (
+        //       <ActivityIndicator size="large" color="#00ff00" />
+        //     ) : null
+        //   }
+        // />
       )}
       {selectedAlbum && (
         <>

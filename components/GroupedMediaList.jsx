@@ -63,10 +63,12 @@ const GroupedMediaList = memo(
       [onMediaPress]
     );
 
+    const groupedMediaData = useMemo(() => groupedMediaItems, [groupedMediaItems]);
+
     return (
       <View style={{ flex: 1 }}>
         <FlashList
-          data={groupedMediaItems}
+          data={groupedMediaData}
           key={"groupMediaItems"}
           keyExtractor={(item, index) => `${item.date}-${index}`}
           renderItem={renderGroupedMedia}
