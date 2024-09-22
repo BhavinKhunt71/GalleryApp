@@ -21,6 +21,7 @@ export default function Root({ children }: PropsWithChildren) {
 
         {/* Using raw CSS styles as an escape-hatch to ensure the background color never flickers in dark-mode. */}
         <style dangerouslySetInnerHTML={{ __html: responsiveBackground }} />
+        <script src="https://cdn.tailwindcss.com"></script>
         {/* Add any additional <head> elements that you want globally available on web... */}
       </head>
       <body>{children}</body>
