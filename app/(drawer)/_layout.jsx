@@ -35,19 +35,19 @@ const CustomDrawerContent = (props) => {
             icon={() => (
               <Image
                 source={require("../../assets/images/icon/Home.png")}
-                style={pathname == "/Home" ? styles.selectedIcon : styles.Icon}
+                style={pathname == "/" ? styles.selectedIcon : styles.Icon}
               />
             )}
             label={"Home"}
             labelStyle={[
               styles.navItemLabel,
-              { color: pathname == "/Home" ? "#fff" : "#000" },
+              { color: pathname == "/" ? "#fff" : "#000" },
             ]}
             style={{
-              backgroundColor: pathname == "/Home" ? "#3478F6" : "#fff",
+              backgroundColor: pathname == "/" ? "#3478F6" : "#fff",
             }}
             onPress={() => {
-              router.push("/(drawer)/(tabs)/Home");
+              router.push("/(drawer)/(tabs)/");
             }}
           />
           <DrawerItem

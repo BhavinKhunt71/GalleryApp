@@ -1,5 +1,10 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { View, StyleSheet, Text } from "react-native";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useLayoutEffect,
+} from "react";
+import { View, StyleSheet, PermissionsAndroid } from "react-native";
 import * as MediaLibrary from "expo-media-library";
 import FloatingMenu from "../../../components/Ui/FloatingMenu";
 import { GroupedMediaList } from "../../../components/GroupedMediaList";
@@ -8,9 +13,12 @@ import ImageDetailView from "../../../components/ImageDetailView";
 import GalleryHeader from "../../../components/Ui/GalleryHeader"; // Import GalleryHeader component
 import AlbumTitle from "../../../components/Ui/AlbumTitle"; // Import AlbumTitle component
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getMyAlbumsData, groupMediaByDate } from "../../../constants/utils";
 import { InterstitialAd, TestIds } from "react-native-google-mobile-ads";
-
+import { getMyVaultData, groupMediaByDate } from "../../../constants/utils";
+import {
+  checkManagePermission,
+  requestManagePermission,
+} from "manage-external-storage";
 const adUnitId1 = __DEV__
   ? TestIds.INTERSTITIAL
   : "ca-app-pub-1358580905548176~4857978610"; // Use your ad unit ID
@@ -35,20 +43,17 @@ const GalleryApp = () => {
   const [selectedOption, setSelectedOption] = useState(null);
   const [groupedMediaItems, setGroupedMediaItems] = useState([]);
   const [seletedTotalCount, setSeletedTotalCount] = useState();
-  const [noAlbum, setNoAlbum] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    requestPermission();
-  }, []);
+    filterAlbums(searchQuery);
+  }, [albums, searchQuery]);
 
   useEffect(() => {
-    filterAlbums(searchQuery);
-    // if(albums.length > 0){
-    //   setNoAlbum(false);
-    // }
-  }, [albums, searchQuery]);
+    // requestPermission()
+    requestPermission();
+  }, []);
 
   useEffect(() => {
     interstitial1.load();
@@ -56,62 +61,89 @@ const GalleryApp = () => {
   }, []);
 
   const requestPermission = async () => {
-    const { status } = await MediaLibrary.requestPermissionsAsync();
-    if (status === "granted") {
+    const { granted } = await MediaLibrary.requestPermissionsAsync();
+    const checkaccess = await checkManagePermission();
+    if (!checkaccess) {
+      var access = await requestManagePermission();
+    }
+    const accessTrue = checkaccess === true ? checkaccess : access;
+    if (granted && accessTrue) {
       loadAlbumsWithFirstImage();
     } else {
       alert("Permission required to access files.");
     }
   };
 
+  // // Function to load and show interstitial ad
+  // const loadAndShowInterstitialAd =async () => {
+  //   // interstitial.load();
+  //   interstitial.show();
+  // };
+
   const loadAlbumsWithFirstImage = async () => {
     setRefreshing(true);
-    const albumList = await getMyAlbumsData();
-    if (albumList.length > 0) {
-      setNoAlbum(false);
-      const albumsWithImages = await Promise.all(
-        albumList.map(async (album) => {
-          const assets = await MediaLibrary.getAssetsAsync({
-            album: album.id,
-            mediaType: ["photo", "video"],
-            first: 1,
-            sortBy: [MediaLibrary.SortBy.modificationTime], // Fetch only the first media item
-          });
+    const albumList = await MediaLibrary.getAlbumsAsync();
+    const albumsWithImages = await Promise.all(
+      albumList.map(async (album) => {
+        const assets = await MediaLibrary.getAssetsAsync({
+          album: album.id,
+          mediaType: ["photo", "video"],
+          first: 1,
+          sortBy: [MediaLibrary.SortBy.modificationTime], // Fetch only the first media item
+        });
 
-          // const assetCount = await MediaLibrary.getAssetsAsync({
-          //   album: album.id,
-          //   mediaType: ["photo", "video"],
-          // });
+        // const assetCount = await MediaLibrary.getAssetsAsync({
+        //   album: album.id,
+        //   mediaType: ["photo", "video"],
+        // });
 
-          return assets.totalCount > 0 // Filter out albums with no items
-            ? {
-                ...album,
-                firstMedia: assets.assets[0], // Store the first media item (can be photo or video)
-                totalCount: assets.totalCount, // Total number of assets (photos + videos)
+        return assets.totalCount > 0 // Filter out albums with no items
+          ? {
+              ...album,
+              firstMedia: assets.assets[0], // Store the first media item (can be photo or video)
+              totalCount: assets.totalCount, // Total number of assets (photos + videos)
+            }
+          : null;
+      })
+    );
+    const storedAlbums = await AsyncStorage.getItem("albums");
+    if (storedAlbums !== null) {
+      const storedVault = await getMyVaultData();
+      if (storedVault.length > 0) {
+        const filteredAlbums = [];
+
+        // Use forEach to filter the albums
+        albumsWithImages.forEach((item) => {
+          let found = false;
+          if (item) {
+            storedVault.forEach((val) => {
+              if (val && val.title === item.title) {
+                found = true;
               }
-            : null;
-        })
-      );
-      const storedAlbums = await AsyncStorage.getItem("albums");
-      if (storedAlbums !== null) {
-        // setAlbums(JSON.parse(storedAlbums));
-        // console.log(JSON.parse(storedAlbums));
+            });
+            if (!found) {
+              filteredAlbums.push(item);
+            }
+          }
+        });
+        setAlbums([...filteredAlbums, ...JSON.parse(storedAlbums)]);
+        // console.log(albumTitle);
+      } else {
         setAlbums([
           ...albumsWithImages.filter(Boolean),
           ...JSON.parse(storedAlbums),
         ]); // Remove null entries
-      } else {
-        setAlbums(albumsWithImages.filter(Boolean));
       }
     } else {
-      setNoAlbum(true);
+      setAlbums(albumsWithImages.filter(Boolean));
     }
     setRefreshing(false);
   };
 
   const loadMediaFromAlbum = async (albumId, albumName, totalCount) => {
+    // loadAndShowInterstitialAd(); // Show ad when loading media from album
     setRefreshing(true);
-    if(interstitial1.loaded){
+    if (interstitial1.loaded) {
       interstitial1.show();
     }
     setSelectedAlbum(albumId);
@@ -164,8 +196,20 @@ const GalleryApp = () => {
     }
   };
 
+  const onRefresh = async () => {
+    if (selectedAlbum) {
+      setRefreshing(true);
+      await loadMediaFromAlbum();
+      setRefreshing(false);
+    } else {
+      setRefreshing(true);
+      await loadAlbumsWithFirstImage();
+      setRefreshing(false);
+    }
+  };
   const openMedia = (index) => {
-    if(interstitial2.loaded){
+    // loadAndShowInterstitialAd(); // Show ad when loading media from album
+    if (interstitial2.loaded) {
       interstitial2.show();
     }
     setSelectedMediaIndex(index);
@@ -177,7 +221,7 @@ const GalleryApp = () => {
     setHeaderTitle(null);
     setMediaItems([]);
     setGroupedMediaItems([]);
-    setSelectedOption(null);
+    setSelectedOption(null); 
   }, []);
 
   const handleOptionSelect = (option) => {
@@ -191,18 +235,6 @@ const GalleryApp = () => {
   };
   const closeMediaDetail = () => {
     setIsModalVisible(false);
-  };
-
-  const onRefresh = async () => {
-    if (selectedAlbum) {
-      setRefreshing(true);
-      await loadMediaFromAlbum();
-      setRefreshing(false);
-    } else {
-      setRefreshing(true);
-      await loadAlbumsWithFirstImage();
-      setRefreshing(false);
-    }
   };
 
   const handleImageDeletion = (updatedMediaItems) => {
@@ -220,11 +252,17 @@ const GalleryApp = () => {
   const filterAlbums = (query) => {
     // console.log(query)
     let filteredAlbums = [];
-    if (query.trim()) {
-      filteredAlbums = filteredAlbums.filter((album) =>
-        album.title.toLowerCase().includes(query.toLowerCase())
-      );
-      // console.log(filteredAlbums);
+    if (filteredAlbums) {
+      if (query.trim()) {
+        albums.forEach((album) => {
+          if (album.title != "") {
+            if (album.title.toLowerCase().includes(query.toLowerCase())) {
+              filteredAlbums.push(album);
+            }
+          }
+        });
+        // console.log(filteredAlbums);
+      }
     }
     if (filteredAlbums.length > 0) {
       setResAlbums(filteredAlbums);
@@ -244,10 +282,8 @@ const GalleryApp = () => {
   };
 
   const handleOnCancel = () => {
-    setSearchQuery("");
     setResAlbums(albums);
   };
-
   return (
     <View style={styles.container}>
       <GalleryHeader
@@ -261,14 +297,15 @@ const GalleryApp = () => {
         handleOnCancel={handleOnCancel}
         handleOnClear={handleOnClear}
       />
-      <AlbumTitle headerTitle={headerTitle} title={"Collection"} />
-      {noAlbum && <Text style={styles.noAlbumText}>No personal collection found</Text>}
+      <AlbumTitle headerTitle={headerTitle} title={"Home"} />
       {selectedOption && selectedAlbum ? (
         <GroupedMediaList
           groupedMediaItems={groupedMediaItems}
           onMediaPress={openMedia}
           handleScroll={handleScroll}
           loadingMoreMedia={loadingMoreMedia}
+          setGroupedMediaItems={setGroupedMediaItems}
+          albums={albums}
           onRefresh={onRefresh}
           refreshing={refreshing}
         />
@@ -338,13 +375,6 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: "row",
     gap: 10,
-  },
-  noAlbumText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginTop: "70%",
-    color: "#888",
   },
   albumContainer: {
     paddingTop: 16,

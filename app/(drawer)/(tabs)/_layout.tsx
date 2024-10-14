@@ -9,18 +9,19 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function TabLayout() {
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1}}>
       <Tabs
         screenOptions={{
           tabBarActiveTintColor: Colors["light"].tint,
           headerShown: false,
           tabBarLabelStyle: {
             display: "none",
-          },
+          }, 
+          tabBarStyle : styles.tabBar         
         }}
       >
         <Tabs.Screen
-          name="Home"
+          name="index"
           options={{
             title: "Home",
             tabBarIcon: ({ color, focused }) => (
@@ -93,6 +94,9 @@ const styles = StyleSheet.create({
   Icon: {
     width: 20,
     height: 20,
-    objectFit: "contain",
+    resizeMode : "contain",
+  },
+  tabBar: {
+    backgroundColor: "#F9F9F9",
   },
 });

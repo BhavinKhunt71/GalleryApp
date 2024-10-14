@@ -6,14 +6,17 @@ import {
   StyleSheet,
   Dimensions,
   ActivityIndicator,
-  Alert,
   Modal,
-  FlatList,
+  Button,
+  Alert,
 } from "react-native";
 import Share from "react-native-share";
 import { FlashList } from "@shopify/flash-list";
 import FastImage from "react-native-fast-image";
 import { Video } from "expo-av";
+import { FlatList } from "react-native";
+import * as MediaLibrary from "expo-media-library";
+import * as FileSystem from "expo-file-system";
 import Close from "../assets/images/icon/close.svg";
 import Vault from "../assets/images/icon/vault.svg";
 import Copy from "../assets/images/icon/copy.svg";
@@ -39,29 +42,49 @@ import {
 
 const { width, height } = Dimensions.get("window");
 
-// const { width } = Dimensions.get("window");
-
-const GroupedMediaList = memo(
+const MediaList = memo(
   ({
-    groupedMediaItems,
+    mediaAlbumItems,
     onMediaPress,
     handleScroll,
+    selectedAlbum,
+    loadMediaFromAlbum,
     loadingMoreMedia,
-    albums,
-    refreshing,
+    setMediaItems,
+    albums, // Albums data passed via props
     onRefresh,
+    refreshing,
+    setResAlbums,
   }) => {
     const [isSelectionMode, setIsSelectionMode] = useState(false);
+    const [isAlbumSelectionMode, setIsAlbumSelectionMode] = useState(false);
     const [selectedImages, setSelectedImages] = useState([]);
+    const [selectedAlbums, setSelectedAlbums] = useState([]);
     const [showAlbumModal, setShowAlbumModal] = useState(false);
-    const [actionType, setActionType] = useState(""); // 'copy' or 'move'
-    // const [selectedAlbumForAction, setSelectedAlbumForAction] = useState(null);
+    const [actionType, setActionType] = useState("");
     const [VaultAlbums, setVaultAlbums] = useState([]);
     const [isVaultModelVisible, setIsVaultModelVisible] = useState(false);
+
+    const handleLongPressAlbum = (item) => {
+      setIsAlbumSelectionMode(true);
+      toggleSelection(item);
+    };
 
     const handleLongPress = (item) => {
       setIsSelectionMode(true);
       toggleSelection(item);
+    };
+    const toggleSelectionAlbum = (item) => {
+      const mediaObj = {
+        id: item.id,
+      };
+      // console.log(mediaObj)
+      const isSelected = selectedAlbums.some((item) => item.id === mediaObj.id);
+      if (isSelected) {
+        setSelectedAlbums(selectedAlbums.filter((data) => data.id !== item.id));
+      } else {
+        setSelectedAlbums([...selectedAlbums, mediaObj]);
+      }
     };
 
     const toggleSelection = (item) => {
@@ -79,10 +102,15 @@ const GroupedMediaList = memo(
       }
     };
 
+    const closeSelectionModeAlbums = () => {
+      setIsAlbumSelectionMode(false);
+      setSelectedAlbums([]);
+    };
     const closeSelectionMode = () => {
       setIsSelectionMode(false);
       setSelectedImages([]);
     };
+
     const loadAlbumsWithFirstImage = async () => {
       // AsyncStorage.clear();
       const albumList = await getMyVaultData();
@@ -122,70 +150,106 @@ const GroupedMediaList = memo(
       }
       // }
     };
-    const renderGroupedMedia = ({ item }) => {
-      const [date, items] = item; // Destructure date and media items
-
+    const renderAlbumItem = ({ item }) => {
+      const mediaObj = { id: item.id };
+      const isSelected = selectedAlbums.some((item) => item.id === mediaObj.id);
+      if (item.empty) {
+        return <View style={[styles.mediaItem, styles.invisible]} />;
+      } else if (item.totalCount === 0) {
+        return (
+          <View style={styles.albumItem}>
+            <View style={styles.albumEmptyImage}>
+              <Folder />
+            </View>
+            <View style={styles.albumInfo}>
+              <Text style={styles.albumTitle} numberOfLines={2}>
+                {item.title}
+              </Text>
+              <Text style={styles.albumCount}>{item.totalCount}</Text>
+            </View>
+          </View>
+        );
+      }
       return (
-        <View>
-          {/* Render Date Header */}
-          <Text style={styles.dateText}>{date}</Text>
+        <TouchableOpacity
+          onLongPress={() => handleLongPressAlbum(item)}
+          onPress={() => {
+            if (isAlbumSelectionMode) {
+              toggleSelectionAlbum(item);
+            } else {
+              loadMediaFromAlbum(item.id, item.title, item.totalCount);
+            }
+          }}
+          style={styles.albumItem}
+        >
+          <View style={styles.albumImage}>
+            <FastImage
+              source={{
+                uri: item.firstMedia.uri,
+                priority: FastImage.priority.high,
+                cache: FastImage.cacheControl.immutable,
+              }}
+              style={[
+                styles.albumImage,
+                isSelected && styles.selectedMediaItem,
+              ]}
+              resizeMode={FastImage.resizeMode.cover}
+            />
+            {isSelected && (
+              <View style={styles.selectionOverlay}>
+                <Selected />
+              </View>
+            )}
+          </View>
+          <View style={styles.albumInfo}>
+            <Text style={styles.albumTitle} numberOfLines={2}>
+              {item.title}
+            </Text>
+            <Text style={styles.albumCount}>{item.totalCount}</Text>
+          </View>
+        </TouchableOpacity>
+      );
+    };
 
-          {/* Render Media Items for this date */}
-          <FlatList
-            data={items}
-            scrollEnabled={false}
-            refreshing={refreshing} // Show spinner when refreshing
-            onRefresh={onRefresh} // Trigger on pull down
-            renderItem={({ item, index }) => {
-              const mediaObj = { id: item.id, albumId: item.albumId };
-              const isSelected = selectedImages.some(
-                (item) => item.id === mediaObj.id
-              );
-              return (
-                <View>
-                  <TouchableOpacity
-                    onLongPress={() => handleLongPress(item)}
-                    onPress={() => {
-                      if (isSelectionMode) {
-                        toggleSelection(item);
-                      } else {
-                        onMediaPress(index);
-                      }
-                    }}
-                    style={[
-                      styles.mediaItem,
-                      isSelected && styles.selectedMediaItem,
-                    ]}
-                  >
-                    <FastImage
-                      source={{
-                        uri: item.uri,
-                        priority: FastImage.priority.high,
-                        cache: FastImage.cacheControl.immutable,
-                      }}
-                      style={styles.mediaImage}
-                      resizeMode={FastImage.resizeMode.cover}
-                    />
-                    {item.mediaType === "video" && (
-                      <View style={styles.videoOverlay}>
-                        <Text style={styles.playIcon}>▶</Text>
-                        <Text style={styles.videoDuration}>
-                          {formatDuration(item.duration)}
-                        </Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                  {isSelected && (
-                    <View style={styles.selectionOverlay}>
-                      <Selected />
-                    </View>
-                  )}
-                </View>
-              );
+    const renderMediaItem = ({ item, index }) => {
+      const mediaObj = { id: item.id, albumId: item.albumId };
+      const isSelected = selectedImages.some((item) => item.id === mediaObj.id);
+      return (
+        <View style={styles.itemsContainer}>
+          <TouchableOpacity
+            onLongPress={() => handleLongPress(item)}
+            onPress={() => {
+              if (isSelectionMode) {
+                toggleSelection(item);
+              } else {
+                onMediaPress(index);
+              }
             }}
-            keyExtractor={(item) => item.id}
-            numColumns={3}
-          />
+            style={[styles.mediaItem, isSelected && styles.selectedMediaItem]}
+          >
+            <FastImage
+              source={{
+                uri: item.uri,
+                priority: FastImage.priority.high,
+                cache: FastImage.cacheControl.immutable,
+              }}
+              style={styles.mediaImage}
+              resizeMode={FastImage.resizeMode.cover}
+            />
+            {item.mediaType === "video" && (
+              <View style={styles.videoOverlay}>
+                <Text style={styles.playIcon}>▶</Text>
+                <Text style={styles.videoDuration}>
+                  {formatDuration(item.duration)}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          {isSelected && (
+            <View style={styles.selectionOverlay}>
+              <Selected />
+            </View>
+          )}
         </View>
       );
     };
@@ -243,6 +307,7 @@ const GroupedMediaList = memo(
         </TouchableOpacity>
       );
     };
+
     const renderModelVaultAlbumItem = ({ item }) => {
       return (
         <TouchableOpacity
@@ -261,10 +326,7 @@ const GroupedMediaList = memo(
         </TouchableOpacity>
       );
     };
-    const groupedMediaData = useMemo(
-      () => groupedMediaItems,
-      [groupedMediaItems]
-    );
+    const mediaData = useMemo(() => mediaAlbumItems, [mediaAlbumItems]);
 
     const openAlbumModal = (action) => {
       setActionType(action); // Set 'copy' or 'move'
@@ -274,6 +336,19 @@ const GroupedMediaList = memo(
     const handleHide = async () => {
       setIsVaultModelVisible(true);
       loadAlbumsWithFirstImage();
+    };
+
+    const handleDeleteAlbums = async () => {
+      try {
+        const result = await MediaLibrary.deleteAlbumsAsync(
+          selectedAlbums,
+          true
+        );
+        onRefresh();
+        closeSelectionModeAlbums();
+      } catch (error) {
+        console.error("Error deleting media: ", error);
+      }
     };
 
     const handleVaultAlbumSelect = async (item) => {
@@ -479,6 +554,14 @@ const GroupedMediaList = memo(
       }
     };
 
+    // const renderHeader = () => {
+    //   if (!loading) return null;
+    //   return (
+    //     <View style={{ padding: 10 }}>
+    //       <ActivityIndicator size="large" />
+    //     </View>
+    //   );
+    // };
     return (
       <View style={[{ flex: 1 }, isSelectionMode && { paddingBottom: 36 }]}>
         {isSelectionMode && (
@@ -500,16 +583,32 @@ const GroupedMediaList = memo(
             </TouchableOpacity>
           </View>
         )}
+
+        {isAlbumSelectionMode && (
+          <View style={styles.selectionHeaderAlbum}>
+            <TouchableOpacity
+              onPress={closeSelectionModeAlbums}
+              style={styles.button}
+            >
+              <Close />
+            </TouchableOpacity>
+
+            <Text>{selectedAlbums.length} selected</Text>
+            <TouchableOpacity onPress={handleDeleteAlbums}>
+              <Delete />
+            </TouchableOpacity>
+          </View>
+        )}
+
         <FlatList
-          data={groupedMediaData}
-          // key={"groupMediaItems"}
-          keyExtractor={(item, index) => `${item.date}-${index}`}
-          renderItem={renderGroupedMedia}
-          // estimatedItemSize={110}
+          data={mediaData}
+          keyExtractor={(item) => item.id}
+          renderItem={selectedAlbum ? renderMediaItem : renderAlbumItem}
+          numColumns={3}
+          // ListHeaderComponent={renderHeader}
           refreshing={refreshing} // Show spinner when refreshing
           onRefresh={onRefresh} // Trigger on pull down
-          numColumns={1}
-          onScroll={handleScroll}
+          onScroll={selectedAlbum && handleScroll}
           scrollEventThrottle={16}
           ListFooterComponent={
             loadingMoreMedia ? (
@@ -517,6 +616,7 @@ const GroupedMediaList = memo(
             ) : null
           }
         />
+
         {isSelectionMode && (
           <View style={styles.selectionFooter}>
             <TouchableOpacity
@@ -641,29 +741,14 @@ const GroupedMediaList = memo(
   }
 );
 
-export { GroupedMediaList };
-
+export { MediaList };
 const styles = StyleSheet.create({
   mediaItem: {
     margin: 1,
   },
-  mediaImage: {
-    width: (width - 36) / 3,
-    aspectRatio: 1,
-    borderRadius: 7,
-  },
-  itemsContainer: {
-    display: "flex",
-    flexDirection: "column",
-  },
-  dateText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-    marginTop: 16,
-    marginBottom: 8,
-    textAlign: "left",
-    width: "100%",
+  albumItem: {
+    flex: 1,
+    overflow: "hidden",
   },
   button: {
     width: 36,
@@ -674,6 +759,24 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     elevation: 8,
     borderRadius: 99,
+  },
+  albumImage: {
+    width: (width - 36) / 3,
+    aspectRatio: 1,
+    borderRadius: 7,
+  },
+  albumInfo: {
+    paddingVertical: 8,
+    backgroundColor: "#fff",
+  },
+  albumTitle: {
+    fontSize: 16,
+    width: (width - 36) / 3,
+    fontWeight: "bold",
+  },
+  albumCount: {
+    fontSize: 12,
+    color: "#888",
   },
   selectedImage: {
     opacity: 0.5,
@@ -724,6 +827,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 10,
   },
+  mediaImage: {
+    width: (width - 36) / 3,
+    aspectRatio: 1,
+    borderRadius: 7,
+  },
   selectedMediaItem: {
     opacity: 0.5,
   },
@@ -731,6 +839,18 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 4,
     right: 4,
+  },
+  selectionHeaderAlbum: {
+    position: "absolute",
+    top: -136,
+    left: -16,
+    right: -16,
+    backgroundColor: "#fff",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    zIndex: 10,
   },
   selectionHeader: {
     position: "absolute",
