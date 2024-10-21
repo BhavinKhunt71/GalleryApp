@@ -78,7 +78,6 @@ const MediaList = memo(
       const mediaObj = {
         id: item.id,
       };
-      // console.log(mediaObj)
       const isSelected = selectedAlbums.some((item) => item.id === mediaObj.id);
       if (isSelected) {
         setSelectedAlbums(selectedAlbums.filter((data) => data.id !== item.id));
@@ -93,7 +92,6 @@ const MediaList = memo(
         albumId: item.albumId,
         name: item.filename,
       };
-      // console.log(mediaObj)
       const isSelected = selectedImages.some((item) => item.id === mediaObj.id);
       if (isSelected) {
         setSelectedImages(selectedImages.filter((data) => data.id !== item.id));
@@ -114,12 +112,9 @@ const MediaList = memo(
     const loadAlbumsWithFirstImage = async () => {
       // AsyncStorage.clear();
       const albumList = await getMyVaultData();
-      // console.log(albumList);
-      // console.log(albumList);
       // if (albumList.length > 0) {
       const albumsWithImages = await Promise.all(
         albumList.map(async (album) => {
-          // console.log(album.id)
           const assets = await MediaLibrary.getAssetsAsync({
             album: album.id,
             mediaType: ["photo", "video"],
@@ -131,7 +126,6 @@ const MediaList = memo(
             album: album.id,
             mediaType: ["photo", "video"],
           });
-          // console.log(assets.title);
           return assetCount.totalCount > 0 // Filter out albums with no items
             ? {
                 ...album,
@@ -142,7 +136,6 @@ const MediaList = memo(
         })
       );
       const storedAlbums = await getVaultData();
-      // console.log(storedAlbums);
       if (storedAlbums !== null) {
         setVaultAlbums([...albumsWithImages.filter(Boolean), ...storedAlbums]);
       } else {
@@ -358,9 +351,8 @@ const MediaList = memo(
           (media) => media.albumId
         ); // Extract albumIds
         const selectedMediaNames = selectedImages.map((media) => media.name); // Extract albumIds
-        console.log(selectedMediaIds);
         if (selectedMediaIds.length === 0) {
-          console.log("No media selected");
+          Alert.alert("No media selected");
           return;
         }
 
@@ -423,13 +415,11 @@ const MediaList = memo(
               albumId: selectedMediaAlbumIds[i],
               name: selectedMediaNames[i],
             };
-            console.log(newItem);
             const updatedMyData = await getIdVaultData();
             await storeIdVaultData([...updatedMyData, newItem]);
           }
         }
-        const updatedMyData = await getIdVaultData();
-        console.log(updatedMyData);
+
         // Optionally close the selection mode and hide the modal after adding the media
         // closeSelectionMode();
         setIsVaultModelVisible(false);
@@ -455,7 +445,6 @@ const MediaList = memo(
               selectedImages[0],
               true
             );
-            console.log(newalbum);
             const data = await getAlbumsData();
             const updatedData = data.filter(
               (value) => value.title != newalbum.title

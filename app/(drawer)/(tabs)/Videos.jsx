@@ -21,10 +21,10 @@ import {
 } from "manage-external-storage";
 const adUnitId1 = __DEV__
   ? TestIds.INTERSTITIAL
-  : "ca-app-pub-1358580905548176~4857978610"; // Use your ad unit ID
+  : "ca-app-pub-1358580905548176/1538470693"; // Use your ad unit ID
 const adUnitId2 = __DEV__
   ? TestIds.INTERSTITIAL
-  : "ca-app-pub-1358580905548176~4857978610"; // Use your ad unit ID
+  : "ca-app-pub-1358580905548176/1538470693"; // Use your ad unit ID
 
 const interstitial1 = InterstitialAd.createForAdRequest(adUnitId1);
 const interstitial2 = InterstitialAd.createForAdRequest(adUnitId2);
@@ -127,7 +127,6 @@ const GalleryApp = () => {
           }
         });
         setAlbums([...filteredAlbums, ...JSON.parse(storedAlbums)]);
-        // console.log(albumTitle);
       } else {
         setAlbums([
           ...albumsWithImages.filter(Boolean),
@@ -165,7 +164,6 @@ const GalleryApp = () => {
     if (!hasMoreMedia || loadingMoreMedia) return;
 
     setLoadingMoreMedia(true);
-    // console.log(selectedAlbum);
     const moreAssets = await MediaLibrary.getAssetsAsync({
       album: selectedAlbum,
       mediaType: ["video"],
@@ -250,7 +248,6 @@ const GalleryApp = () => {
     );
   };
   const filterAlbums = (query) => {
-    // console.log(query)
     let filteredAlbums = [];
     if (filteredAlbums) {
       if (query.trim()) {
@@ -261,13 +258,11 @@ const GalleryApp = () => {
             }
           }
         });
-        // console.log(filteredAlbums);
       }
     }
     if (filteredAlbums.length > 0) {
       setResAlbums(filteredAlbums);
     } else {
-      // console.log("hello");
       setResAlbums(albums);
     }
   };

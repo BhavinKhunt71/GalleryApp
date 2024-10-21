@@ -56,7 +56,6 @@ const MediaPicker = ({ addAssetModelVisible, type, onClose, onDone }) => {
       first: MEDIA_LIMIT, // Limit to 50 items per fetch
       after: nextPage ? nextPage : null, // Use endCursor for pagination
     });
-    // console.log(mediaAssets.assets[0]);
 
     const filteredAssets = mediaAssets.assets.filter(
       (asset) => !idVaultNames.includes(asset.filename)
@@ -74,7 +73,6 @@ const MediaPicker = ({ addAssetModelVisible, type, onClose, onDone }) => {
       albumId: item.albumId,
       name: item.filename,
     };
-    // console.log(mediaObj)
     const isSelected = selectedMedia.some((item) => item.id === mediaObj.id);
     if (isSelected) {
       setSelectedMedia(selectedMedia.filter((data) => data.id !== item.id));

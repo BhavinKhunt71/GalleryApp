@@ -19,12 +19,13 @@ import {
   checkManagePermission,
   requestManagePermission,
 } from "manage-external-storage";
+import { StatusBar } from "expo-status-bar";
 const adUnitId1 = __DEV__
   ? TestIds.INTERSTITIAL
-  : "ca-app-pub-1358580905548176~4857978610"; // Use your ad unit ID
+  : "ca-app-pub-1358580905548176/1538470693"; // Use your ad unit ID
 const adUnitId2 = __DEV__
   ? TestIds.INTERSTITIAL
-  : "ca-app-pub-1358580905548176~4857978610"; // Use your ad unit ID
+  : "ca-app-pub-1358580905548176/1538470693"; // Use your ad unit ID
 
 const interstitial1 = InterstitialAd.createForAdRequest(adUnitId1);
 const interstitial2 = InterstitialAd.createForAdRequest(adUnitId2);
@@ -127,7 +128,6 @@ const GalleryApp = () => {
           }
         });
         setAlbums([...filteredAlbums, ...JSON.parse(storedAlbums)]);
-        // console.log(albumTitle);
       } else {
         setAlbums([
           ...albumsWithImages.filter(Boolean),
@@ -165,7 +165,6 @@ const GalleryApp = () => {
     if (!hasMoreMedia || loadingMoreMedia) return;
 
     setLoadingMoreMedia(true);
-    // console.log(selectedAlbum);
     const moreAssets = await MediaLibrary.getAssetsAsync({
       album: selectedAlbum,
       mediaType: ["photo", "video"],
@@ -221,7 +220,7 @@ const GalleryApp = () => {
     setHeaderTitle(null);
     setMediaItems([]);
     setGroupedMediaItems([]);
-    setSelectedOption(null); 
+    setSelectedOption(null);
   }, []);
 
   const handleOptionSelect = (option) => {
@@ -250,7 +249,6 @@ const GalleryApp = () => {
     );
   };
   const filterAlbums = (query) => {
-    // console.log(query)
     let filteredAlbums = [];
     if (filteredAlbums) {
       if (query.trim()) {
@@ -261,13 +259,11 @@ const GalleryApp = () => {
             }
           }
         });
-        // console.log(filteredAlbums);
       }
     }
     if (filteredAlbums.length > 0) {
       setResAlbums(filteredAlbums);
     } else {
-      // console.log("hello");
       setResAlbums(albums);
     }
   };
@@ -285,63 +281,66 @@ const GalleryApp = () => {
     setResAlbums(albums);
   };
   return (
-    <View style={styles.container}>
-      <GalleryHeader
-        selectedAlbum={selectedAlbum}
-        headerTitle={headerTitle}
-        backNavigation={backNavigation}
-        setAlbums={setAlbums}
-        albums={albums}
-        value={searchQuery}
-        handleSerachInput={handleSerachInput}
-        handleOnCancel={handleOnCancel}
-        handleOnClear={handleOnClear}
-      />
-      <AlbumTitle headerTitle={headerTitle} title={"Home"} />
-      {selectedOption && selectedAlbum ? (
-        <GroupedMediaList
-          groupedMediaItems={groupedMediaItems}
-          onMediaPress={openMedia}
-          handleScroll={handleScroll}
-          loadingMoreMedia={loadingMoreMedia}
-          setGroupedMediaItems={setGroupedMediaItems}
-          albums={albums}
-          onRefresh={onRefresh}
-          refreshing={refreshing}
-        />
-      ) : (
-        <MediaList
-          mediaAlbumItems={selectedAlbum ? mediaItems : resAlbums}
-          onMediaPress={openMedia}
-          handleScroll={selectedAlbum && handleScroll}
+    <>
+      <StatusBar backgroundColor="#fff" />
+      <View style={styles.container}>
+        <GalleryHeader
           selectedAlbum={selectedAlbum}
-          loadMediaFromAlbum={loadMediaFromAlbum}
-          loadingMoreMedia={loadingMoreMedia}
-          setMediaItems={setMediaItems}
+          headerTitle={headerTitle}
+          backNavigation={backNavigation}
+          setAlbums={setAlbums}
           albums={albums}
-          onRefresh={onRefresh}
-          setResAlbums={setAlbums}
-          refreshing={refreshing}
+          value={searchQuery}
+          handleSerachInput={handleSerachInput}
+          handleOnCancel={handleOnCancel}
+          handleOnClear={handleOnClear}
         />
-      )}
-      {selectedAlbum && (
-        <FloatingMenu
-          handleOptionSelect={handleOptionSelect}
-          selectedOption={selectedOption}
-        />
-      )}
-      {isModalVisible && (
-        <ImageDetailView
-          mediaItems={mediaItems}
-          selectedMediaIndex={selectedMediaIndex}
-          onClose={closeMediaDetail}
-          setMediaItems={handleImageDeletion}
-          isModalVisible={isModalVisible}
-          totalCount={seletedTotalCount}
-          IsVault={true}
-        />
-      )}
-    </View>
+        <AlbumTitle headerTitle={headerTitle} title={"Home"} />
+        {selectedOption && selectedAlbum ? (
+          <GroupedMediaList
+            groupedMediaItems={groupedMediaItems}
+            onMediaPress={openMedia}
+            handleScroll={handleScroll}
+            loadingMoreMedia={loadingMoreMedia}
+            setGroupedMediaItems={setGroupedMediaItems}
+            albums={albums}
+            onRefresh={onRefresh}
+            refreshing={refreshing}
+          />
+        ) : (
+          <MediaList
+            mediaAlbumItems={selectedAlbum ? mediaItems : resAlbums}
+            onMediaPress={openMedia}
+            handleScroll={selectedAlbum && handleScroll}
+            selectedAlbum={selectedAlbum}
+            loadMediaFromAlbum={loadMediaFromAlbum}
+            loadingMoreMedia={loadingMoreMedia}
+            setMediaItems={setMediaItems}
+            albums={albums}
+            onRefresh={onRefresh}
+            setResAlbums={setAlbums}
+            refreshing={refreshing}
+          />
+        )}
+        {selectedAlbum && (
+          <FloatingMenu
+            handleOptionSelect={handleOptionSelect}
+            selectedOption={selectedOption}
+          />
+        )}
+        {isModalVisible && (
+          <ImageDetailView
+            mediaItems={mediaItems}
+            selectedMediaIndex={selectedMediaIndex}
+            onClose={closeMediaDetail}
+            setMediaItems={handleImageDeletion}
+            isModalVisible={isModalVisible}
+            totalCount={seletedTotalCount}
+            IsVault={true}
+          />
+        )}
+      </View>
+    </>
   );
 };
 

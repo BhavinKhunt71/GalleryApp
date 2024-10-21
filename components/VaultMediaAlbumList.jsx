@@ -69,7 +69,6 @@ const VaultMediaList = memo(
       const mediaObj = {
         id: item.id,
       };
-      // console.log(mediaObj)
       const isSelected = selectedAlbums.some((item) => item.id === mediaObj.id);
       if (isSelected) {
         setSelectedAlbums(selectedAlbums.filter((data) => data.id !== item.id));
@@ -219,7 +218,6 @@ const VaultMediaList = memo(
               selectedMediaIds[0],
               true
             );
-            // console.log(newalbum);
             const data = await getVaultData();
             const updatedData = data.filter(
               (value) => value.title != newalbum.title
@@ -356,7 +354,6 @@ const VaultMediaList = memo(
 
             // Extract albumId and id from the vault item
             const { albumId, id: vaultItemId } = vaultItem;
-            console.log(albumId);
             // Extract id from the selected image
             const { id: selectedItemId } = selectedImage;
 
@@ -375,7 +372,7 @@ const VaultMediaList = memo(
         // Store the updated vault data
         await storeIdVaultData(vaultData);
 
-        console.log("Vault data successfully updated.");
+        Alert.alert("Vault data successfully updated.");
       } catch (error) {
         console.error("Error handling vault data:", error);
       }

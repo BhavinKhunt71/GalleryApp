@@ -9,10 +9,6 @@ import { StatusBar } from "expo-status-bar";
 const CustomDrawerContent = (props) => {
   const pathname = usePathname();
 
-  useEffect(() => {
-    console.log(pathname);
-  }, [pathname]);
-
   return (
     <View style={{ flex: 1 }}>
       <DrawerContentScrollView

@@ -13,10 +13,10 @@ import { InterstitialAd, TestIds } from "react-native-google-mobile-ads";
 
 const adUnitId1 = __DEV__
   ? TestIds.INTERSTITIAL
-  : "ca-app-pub-1358580905548176~4857978610"; // Use your ad unit ID
+  : "ca-app-pub-1358580905548176/1538470693"; // Use your ad unit ID
 const adUnitId2 = __DEV__
   ? TestIds.INTERSTITIAL
-  : "ca-app-pub-1358580905548176~4857978610"; // Use your ad unit ID
+  : "ca-app-pub-1358580905548176/1538470693"; // Use your ad unit ID
 
 const interstitial1 = InterstitialAd.createForAdRequest(adUnitId1);
 const interstitial2 = InterstitialAd.createForAdRequest(adUnitId2);
@@ -94,8 +94,6 @@ const GalleryApp = () => {
       );
       const storedAlbums = await AsyncStorage.getItem("albums");
       if (storedAlbums !== null) {
-        // setAlbums(JSON.parse(storedAlbums));
-        // console.log(JSON.parse(storedAlbums));
         setAlbums([
           ...albumsWithImages.filter(Boolean),
           ...JSON.parse(storedAlbums),
@@ -133,7 +131,6 @@ const GalleryApp = () => {
     if (!hasMoreMedia || loadingMoreMedia) return;
 
     setLoadingMoreMedia(true);
-    // console.log(selectedAlbum);
     const moreAssets = await MediaLibrary.getAssetsAsync({
       album: selectedAlbum,
       mediaType: ["photo", "video"],
@@ -218,18 +215,15 @@ const GalleryApp = () => {
     );
   };
   const filterAlbums = (query) => {
-    // console.log(query)
     let filteredAlbums = [];
     if (query.trim()) {
       filteredAlbums = filteredAlbums.filter((album) =>
         album.title.toLowerCase().includes(query.toLowerCase())
       );
-      // console.log(filteredAlbums);
     }
     if (filteredAlbums.length > 0) {
       setResAlbums(filteredAlbums);
     } else {
-      // console.log("hello");
       setResAlbums(albums);
     }
   };

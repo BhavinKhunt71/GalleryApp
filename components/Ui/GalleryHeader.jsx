@@ -124,8 +124,6 @@ const GalleryHeader = ({
     // Update albums list with the new album and store them
     const updatedAlbums = [...existingAlbums, newAlbum];
     await storeAlbumData(updatedAlbums);
-
-    console.log("Album created:", albumName);
   };
 
   const onCancel = () => {

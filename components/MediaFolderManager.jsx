@@ -34,6 +34,7 @@ import Video from "../assets/images/icon/video.svg";
 import Image from "../assets/images/icon/image.svg";
 import ImageDetailView from "./ImageDetailView";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { StatusBar } from "expo-status-bar";
 
 const MediaFolderManager = () => {
   const [albums, setAlbums] = useState([]);
@@ -74,7 +75,6 @@ const MediaFolderManager = () => {
           album: album.id,
           mediaType: ["photo", "video"],
         });
-        // console.log(assets.title);
         return assetCount.totalCount > 0 // Filter out albums with no items
           ? {
               ...album,
@@ -84,7 +84,6 @@ const MediaFolderManager = () => {
       })
     );
     const storedAlbums = await getVaultData();
-    // console.log(storedAlbums);
     if (storedAlbums !== null) {
       setAlbums([...albumsWithImages.filter(Boolean), ...storedAlbums]);
     } else {
@@ -95,7 +94,6 @@ const MediaFolderManager = () => {
   };
 
   const loadMediaFromAlbum = async (albumId, albumName, totalCount) => {
-    setRefreshing(true);
     setSelectedAlbum(albumId);
     setSeletedTotalCount(totalCount);
     setHeaderTitle(albumName); // Set album name in header
@@ -108,14 +106,12 @@ const MediaFolderManager = () => {
     setMediaItems(albumAssets.assets);
     setHasMoreMedia(albumAssets.hasNextPage);
     setNextPage(albumAssets.endCursor);
-    setRefreshing(false);
   };
 
   const loadMoreMedia = async () => {
     if (!hasMoreMedia || loadingMoreMedia) return;
-
+    // setRefreshing(false);
     setLoadingMoreMedia(true);
-    // console.log(selectedAlbum);
     const moreAssets = await MediaLibrary.getAssetsAsync({
       album: selectedAlbum,
       mediaType: ["photo", "video"],
@@ -127,6 +123,7 @@ const MediaFolderManager = () => {
     setHasMoreMedia(moreAssets.hasNextPage);
     setNextPage(moreAssets.endCursor);
     setLoadingMoreMedia(false);
+    // setRefreshing(false);
   };
 
   const handleScroll = ({ nativeEvent }) => {
@@ -161,7 +158,6 @@ const MediaFolderManager = () => {
       setAddAssetImageModelVisible(true);
     }
     setType(value);
-    // console.log(value);
   };
 
   const handleCreateAlbum = async () => {
@@ -218,18 +214,15 @@ const MediaFolderManager = () => {
     const updatedAlbums = [...existingAlbums, newAlbum];
 
     // Store updated albums back to AsyncStorage
-    // console.log(updatedAlbums);
     await storeVaultData(updatedAlbums);
-    // console.log("Vault album created:", albumName);
   };
   const handleAddItems = async (selectedMedia) => {
     try {
       const selectedMediaIds = selectedMedia.map((media) => media.id); // Extract only the ids
       const selectedMediaAlbumIds = selectedMedia.map((media) => media.albumId); // Extract albumIds
       const selectedMediaNames = selectedMedia.map((media) => media.name); // Extract albumIds
-      console.log(selectedMediaIds);
       if (selectedMediaIds.length === 0) {
-        console.log("No media selected");
+        Alert.alert("No media selected");
         return;
       }
 
@@ -299,7 +292,6 @@ const MediaFolderManager = () => {
             albumId: selectedMediaAlbumIds[i],
             name: selectedMediaNames[i],
           };
-          // console.log(newItem)
           const updatedMyData = await getIdVaultData();
           await storeIdVaultData([...updatedMyData, newItem]);
         }
@@ -312,20 +304,24 @@ const MediaFolderManager = () => {
         setAddAssetImageModelVisible(false);
       }
     } catch (error) {
+      if(type === "video"){
+        setAddAssetVideoModelVisible(false);
+      }
+      else{
+        setAddAssetImageModelVisible(false);
+      }
       Alert.alert(`Error while trying to add media.`);
     }
   };
 
   const onRefresh = async () => {
+    setRefreshing(true);
     if (selectedAlbum) {
-      setRefreshing(true);
-      await loadMediaFromAlbum();
-      setRefreshing(false);
-    } else {
-      setRefreshing(true);
+      setSelectedAlbum(null);
+    } 
       await loadAlbumsWithFirstImage();
-      setRefreshing(false);
-    }
+    
+    setRefreshing(false);
   };
   const closeMediaDetail = () => {
     setIsModalVisible(false);
@@ -346,6 +342,7 @@ const MediaFolderManager = () => {
 
   return (
     <View style={styles.container}>
+      <StatusBar backgroundColor="#fff"/>
       {selectedAlbum ? (
         <VaultGalleryHeader
           backNavigation={backNavigation}

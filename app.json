@@ -4,7 +4,7 @@
     "slug": "Gallery",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/icon-an.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
@@ -17,7 +17,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.png",
+        "foregroundImage": "./assets/images/icon-an.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.bhavinkhunt.GalleryApp"
@@ -29,7 +29,10 @@
     },
     "plugins": [
       [
-        "react-native-google-mobile-ads"
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-1358580905548176~4857978610"
+        }
       ]
     ],
     "experiments": {

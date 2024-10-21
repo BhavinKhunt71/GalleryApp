@@ -6,10 +6,12 @@ import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Image, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 
 export default function TabLayout() {
   return (
     <SafeAreaView style={{ flex: 1}}>
+       <StatusBar backgroundColor="#fff" />
       <Tabs
         screenOptions={{
           tabBarActiveTintColor: Colors["light"].tint,

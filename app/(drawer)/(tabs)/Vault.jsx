@@ -15,13 +15,14 @@ import CustomSelect from "../../../components/Ui/CustomSelect";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import MediaFolderManager from "../../../components/MediaFolderManager";
 import { InterstitialAd, TestIds } from "react-native-google-mobile-ads";
+import { StatusBar } from "expo-status-bar";
 
 const adUnitId1 = __DEV__
   ? TestIds.INTERSTITIAL
-  : "ca-app-pub-1358580905548176~4857978610"; // Use your ad unit ID
+  : "ca-app-pub-1358580905548176/1538470693"; // Use your ad unit ID
 const adUnitId2 = __DEV__
   ? TestIds.INTERSTITIAL
-  : "ca-app-pub-1358580905548176~4857978610"; // Use your ad unit ID
+  : "ca-app-pub-1358580905548176/1538470693"; // Use your ad unit ID
 
 const interstitial1 = InterstitialAd.createForAdRequest(adUnitId1);
 const interstitial2 = InterstitialAd.createForAdRequest(adUnitId2);
@@ -76,7 +77,6 @@ const VaultScreen = () => {
       const credentials = await Keychain.getGenericPassword();
       const security = await AsyncStorage.getItem("security");
       if (security) {
-        console.log(JSON.parse(security));
       }
       if (credentials) {
         SetIsSecondTime(true);
@@ -301,6 +301,7 @@ const VaultScreen = () => {
 
   return (
     <View style={styles.container}>
+       <StatusBar backgroundColor="#3478F6" />
       {!isPasscodeSet ? (
         <View style={styles.passCodeMainContainer}>
           <BigLock />

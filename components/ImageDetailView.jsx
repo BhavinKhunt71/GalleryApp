@@ -40,6 +40,7 @@ import {
   storeVaultData,
 } from "../constants/utils";
 import { ResizeMode, Video } from "expo-av";
+import { Alert } from "react-native";
 const { width, height } = Dimensions.get("window");
 
 function formatDate(dateInput) {
@@ -127,12 +128,8 @@ const ImageDetailView = ({
   const loadAlbumsWithFirstImage = async () => {
     // AsyncStorage.clear();
     const albumList = await getMyVaultData();
-    // console.log(albumList);
-    // console.log(albumList);
-    // if (albumList.length > 0) {
     const albumsWithImages = await Promise.all(
       albumList.map(async (album) => {
-        // console.log(album.id)
         const assets = await MediaLibrary.getAssetsAsync({
           album: album.id,
           mediaType: ["photo", "video"],
@@ -144,7 +141,6 @@ const ImageDetailView = ({
           album: album.id,
           mediaType: ["photo", "video"],
         });
-        // console.log(assets.title);
         return assetCount.totalCount > 0 // Filter out albums with no items
           ? {
               ...album,
@@ -155,7 +151,6 @@ const ImageDetailView = ({
       })
     );
     const storedAlbums = await getVaultData();
-    // console.log(storedAlbums);
     if (storedAlbums !== null) {
       setAlbums([...albumsWithImages.filter(Boolean), ...storedAlbums]);
     } else {
@@ -187,7 +182,6 @@ const ImageDetailView = ({
 
   const openInGallery = async () => {
     try {
-      console.log(currentMedia);
       if (currentMedia.mediaType === "photo") {
         const googlePhotosUrl = `content://media/external/images/media/${currentMedia.id}`;
         await IntentLauncher.startActivityAsync("android.intent.action.EDIT", {
@@ -269,12 +263,9 @@ const ImageDetailView = ({
           albumId: currentMedia.albumId,
           name: currentMedia.filename,
         };
-        console.log(newItem);
         const updatedMyData = await getIdVaultData();
         await storeIdVaultData([...updatedMyData, newItem]);
       }
-      const updatedMyData = await getIdVaultData();
-      console.log(updatedMyData);
       setIsVaultModelVisible(false);
     } catch (error) {
       console.error(`Error while trying to add media:`, error);
@@ -294,7 +285,6 @@ const ImageDetailView = ({
 
         // Extract albumId and id from the vault item
         const { albumId, id: vaultItemId } = vaultItem;
-        console.log(albumId);
         // Extract id from the selected image
         const { id: selectedItemId } = currentMedia;
 
@@ -307,7 +297,6 @@ const ImageDetailView = ({
 
         // Remove the matched item from the vault data
         const uptedData = vaultData.splice(matchingIndex, 1); // Removes the item from the array
-        console.log(uptedData);
       }
 
       // Store the updated vault data
@@ -321,7 +310,7 @@ const ImageDetailView = ({
       } else if (currentIndex >= updatedMediaItems.length) {
         setCurrentIndex(updatedMediaItems.length - 1);
       }
-      console.log("Vault data successfully updated.");
+      Alert.alert("Vault data successfully updated.");
     } catch (error) {
       console.error("Error handling vault data:", error);
     }
